@@ -40,4 +40,5 @@ jobs:
         id: build
 #      - name: Run Forge tests
 #        run: |
-#          for
+#          forge test -vvv
+#        id: test
