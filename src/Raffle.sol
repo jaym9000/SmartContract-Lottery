@@ -45,7 +45,7 @@ contract Raffle {
     constructor(uint256 entranceFee, uint256 interval) {
         i_entranceFee = entranceFee;
         i_interval = interval;
-        s_lastTimeStamp = block.timestamp;
+        s_lastTimeStamp = block.timestamp; // starts the timer
     }
 
     function enterRaffle() public payable {
