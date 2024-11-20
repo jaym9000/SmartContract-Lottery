@@ -33,9 +33,18 @@ contract Raffle {
     error Raffle__SendMoreToEnterRaffle();
 
     uint256 private immutable i_entranceFee;
+    // @dev the duration of the lottery in seconds
+    uint256 private immutable i_interval;
+    address payable[] private s_players;
 
-    constructor(uint256 entranceFee) {
+
+    /* Events */
+    event RaffleEntered((address index cleared);
+
+    // What data structure should we use? How to keep track of all players?
+    constructor(uint256 entranceFee, uint256 interval) {
         i_entranceFee = entranceFee;
+        i_interval = interval;
     }
 
     function enterRaffle() public payable {
@@ -44,6 +53,12 @@ contract Raffle {
         if (msg.value < i_entranceFee) {
             revert Raffle__SendMoreToEnterRaffle(); //most gas efficient
         }
+        s_players.push(payable(msg.sender));
+        emit RaffleEntered(msg.sender);
+    }
+
+    function pickWinner() public {
+        block.timestamp
     }
 
     function pickWinner() public {}
