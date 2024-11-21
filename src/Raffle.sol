@@ -39,7 +39,7 @@ contract Raffle {
     uint256 private s_lastTimeStamp;
 
     /* Events */
-    event RaffleEntered(address indexed player);
+    event RaffleEntered(address indexed player); //Last change made
 
     // What data structure should we use? How to keep track of all players?
     constructor(uint256 entranceFee, uint256 interval) {
@@ -58,7 +58,7 @@ contract Raffle {
         emit RaffleEntered(msg.sender);
     }
 
-    function pickWinner() external {
+    function pickWinner() external view {
         if ((block.timestamp - s_lastTimeStamp) < i_interval) {
             revert("The interval has not passed yet!");
         }
