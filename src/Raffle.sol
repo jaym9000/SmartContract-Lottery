@@ -34,7 +34,21 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
 contract Raffle is VRFConsumerBaseV2Plus {
     /* Errors */
     error Raffle__SendMoreToEnterRaffle();
+    error Raffle__TransferFailed();
+    error Raffle_RaffleNotOpen();
+    error Raffle_UpkeepNotNeeded(
+        uint256 balance,
+        uint256 playersLength,
+        uint256 raffleState
+    );
 
+    /* Type Declarations */
+    enum RaffleState {
+        OPEN, // 0
+        CALCULATING // 1
+    }
+
+    /* State Variables */
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
     uint256 private immutable i_entranceFee;
@@ -44,9 +58,12 @@ contract Raffle is VRFConsumerBaseV2Plus {
     uint32 private immutable i_callbackGasLimit;
     address payable[] private s_players;
     uint256 private s_lastTimeStamp;
+    address private s_recentWinner;
+    RaffleState private s_raffleState;
 
     /* Events */
     event RaffleEntered(address indexed player); //Last change made
+    event WinnerPicked(address indexed winner);
 
     // What data structure should we use? How to keep track of all players?
     constructor(
@@ -59,10 +76,12 @@ contract Raffle is VRFConsumerBaseV2Plus {
     ) VRFConsumerBaseV2Plus(vrfCoordinator) {
         i_entranceFee = entranceFee;
         i_interval = interval;
-        s_lastTimeStamp = block.timestamp; // starts the timer
         i_keyHash = gasLane;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
+
+        s_lastTimeStamp = block.timestamp; // starts the timer
+        s_raffleState = RaffleState.OPEN;
     }
 
     function enterRaffle() public payable {
@@ -71,46 +90,95 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if (msg.value < i_entranceFee) {
             revert Raffle__SendMoreToEnterRaffle(); //most gas efficient
         }
+        if (s_raffleState != RaffleState.OPEN) {
+            revert Raffle_RaffleNotOpen();
+        }
         s_players.push(payable(msg.sender));
         emit RaffleEntered(msg.sender);
     }
 
-    function pickWinner() external {
-        if ((block.timestamp - s_lastTimeStamp) < i_interval) {
-            revert("The interval has not passed yet!");
-        }
-        // requestId = s_vrfCoordinator.requestRandomWords(
-        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
-            keyHash: i_keyHash,
-            subId: i_subscriptionId,
-            requestConfirmations: REQUEST_CONFIRMATIONS,
-            callbackGasLimit: i_callbackGasLimit,
-            numWords: NUM_WORDS,
-            extraArgs: VRFV2PlusClient._argsToBytes(
-                // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
-                VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
-            )
-        });
-        uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
-
-        /*
-        struct RandomWordsRequest {
-    bytes32 keyHash;
-    uint256 subId;
-    uint16 requestConfirmations;
-    uint32 callbackGasLimit;
-    uint32 numWords;
-    bytes extraArgs;
-    }  
-        */
+    // When should the winner be picked?
+    /**
+     * @dev This is the function that the Chainlink nodes will call to see if the loterry is ready to have a winner picked.
+     * The following should be true in order for the upkeepNeeded to be true:
+     * 1. The time interval has passed between raffle runs
+     * 2. The lottery is open
+     * 3. The contract has ETH (has players)
+     * 4. Implicitly, your subscription has LINK
+     * @param - ignored
+     * @return upkeepNeeded - true if it's time to restart the lottery
+     * @return - ignored
+     */
+    function checkUpkeep(
+        bytes memory /* checkData */
+    ) public view returns (bool upkeepNeeded, bytes memory /* performData */) {
+        bool timeHasPassed = ((block.timestamp - s_lastTimeStamp) >=
+            i_interval);
+        bool isOpen = s_raffleState == RaffleState.OPEN;
+        bool hasBalance = address(this).balance > 0;
+        bool hasPlayers = s_players.length > 0;
+        upkeepNeeded = timeHasPassed && isOpen && hasBalance && hasPlayers; // If all conditions are true, upkeepNeeded is true, else it's false
+        return (upkeepNeeded, "");
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
-        // uint256 winnerIndex = randomness % s_players.length;
-        // address payable winner = s_players[winnerIndex];
-        // winner.transfer(address(this).balance);
-        // s_players = new address payable[](0);
-        // s_lastTimeStamp = block.timestamp;
+    // 3. Be automatically called
+    function performUpkeep(bytes calldata /* performData */) external {
+        // if ((block.timestamp - s_lastTimeStamp) < i_interval) {
+        //     revert("The interval has not passed yet!");
+        // }
+        // check to see if enough time has passed
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        if (!upkeepNeeded) {
+            revert Raffle_UpkeepNotNeeded(
+                address(this).balance,
+                s_players.length,
+                uint256(s_raffleState)
+            );
+        }
+        s_raffleState = RaffleState.CALCULATING;
+
+        // requestId = s_vrfCoordinator.requestRandomWords(
+        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient
+            .RandomWordsRequest({
+                keyHash: i_keyHash,
+                subId: i_subscriptionId,
+                requestConfirmations: REQUEST_CONFIRMATIONS,
+                callbackGasLimit: i_callbackGasLimit,
+                numWords: NUM_WORDS,
+                extraArgs: VRFV2PlusClient._argsToBytes(
+                    // Set nativePayment to true to pay for VRF requests with Sepolia ETH instead of LINK
+                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+                )
+            });
+        s_vrfCoordinator.requestRandomWords(request);
+    }
+
+    // CEI: Checks, Effects, Interactions Pattern
+    function fulfillRandomWords(
+        uint256 /*requestId*/,
+        uint256[] calldata randomWords
+    ) internal override {
+        // Check
+
+        // Effect (Internal Contract State)
+        uint256 indexOfWinner = randomWords[0] % s_players.length;
+        address payable recentWinner = s_players[indexOfWinner];
+        s_recentWinner = recentWinner;
+
+        s_raffleState = RaffleState.OPEN;
+        s_players = new address payable[](0);
+        s_lastTimeStamp = block.timestamp;
+        emit WinnerPicked(s_recentWinner);
+
+        (, bytes memory data) = recentWinner.staticcall(
+            abi.encodeWithSignature("getBalance()")
+        );
+
+        // Interactions (External Contract Interactions)
+        (bool success, ) = recentWinner.call{value: address(this).balance}("");
+        if (!success) {
+            revert Raffle__TransferFailed();
+        }
     }
 
     /**
