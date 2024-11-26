@@ -123,9 +123,6 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     // 3. Be automatically called
     function performUpkeep(bytes calldata /* performData */) external {
-        // if ((block.timestamp - s_lastTimeStamp) < i_interval) {
-        //     revert("The interval has not passed yet!");
-        // }
         // check to see if enough time has passed
         (bool upkeepNeeded, ) = checkUpkeep("");
         if (!upkeepNeeded) {
@@ -136,8 +133,6 @@ contract Raffle is VRFConsumerBaseV2Plus {
             );
         }
         s_raffleState = RaffleState.CALCULATING;
-
-        // requestId = s_vrfCoordinator.requestRandomWords(
         VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient
             .RandomWordsRequest({
                 keyHash: i_keyHash,
