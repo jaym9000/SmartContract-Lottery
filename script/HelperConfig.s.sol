@@ -40,7 +40,7 @@ contract HelperConfig is codeConstants, Script {
         if (networkConfigs[chainId].vrfCoordinator != address(0)) {
             return networkConfigs[chainId];
         } else if (chainId == LOCAL_CHAIN_ID) {
-            // return localNetworkConfig;
+            return getOrCreateAnvilEthConfig();
         } else {
             revert HelperConfig__InvalidChainId();
         }
@@ -86,5 +86,7 @@ contract HelperConfig is codeConstants, Script {
             subscriptionId: 0, // might have to fix this
             callbackGasLimit: 500000 // 500,000 gas
         });
+
+        return localNetworkConfig;
     }
 }
