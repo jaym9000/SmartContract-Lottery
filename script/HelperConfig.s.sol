@@ -34,7 +34,7 @@ contract HelperConfig is codeConstants, Script {
         networkConfigs[ETH_SEPOLIA_CHAIN_ID] = getSepoliaEthConfig();
     }
 
-    function getConfigByChainID(
+    function getConfigByChainId(
         uint256 chainId
     ) public returns (NetworkConfig memory) {
         if (networkConfigs[chainId].vrfCoordinator != address(0)) {
@@ -44,6 +44,10 @@ contract HelperConfig is codeConstants, Script {
         } else {
             revert HelperConfig__InvalidChainId();
         }
+    }
+
+    function getConfig() public returns (NetworkConfig memory) {
+        return getConfigByChainId(block.chainid);
     }
 
     function getSepoliaEthConfig() public pure returns (NetworkConfig memory) {
