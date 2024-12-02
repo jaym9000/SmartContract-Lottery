@@ -111,8 +111,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
         view
         returns (bool upkeepNeeded, bytes memory /* performData */ )
     {
+        bool isOpen = RaffleState.OPEN == s_raffleState;
         bool timeHasPassed = ((block.timestamp - s_lastTimeStamp) >= i_interval);
-        bool isOpen = s_raffleState == RaffleState.OPEN;
         bool hasBalance = address(this).balance > 0;
         bool hasPlayers = s_players.length > 0;
         upkeepNeeded = timeHasPassed && isOpen && hasBalance && hasPlayers; // If all conditions are true, upkeepNeeded is true, else it's false
@@ -142,7 +142,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
     }
 
     // CEI: Checks, Effects, Interactions Pattern
-    function fulfillRandomWords(uint256, /*requestId*/ uint256[] calldata randomWords) internal override {
+    function fulfillRandomWords(
+        uint256,
+        /*requestId*/
+        uint256[] calldata randomWords
+    ) internal override {
         // Check
 
         // Effect (Internal Contract State)
