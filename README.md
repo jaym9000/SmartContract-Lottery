@@ -1,10 +1,10 @@
-# Smart Contract Lottery with Foundry
+# Web3.0 Smart Contract Lottery
 
-This repository contains a comprehensive guide to building a smart contract lottery using the Foundry development environment. The project demonstrates the creation of a lottery contract with verifiable randomness using Chainlink VRF.
+This Solidity smart contract implements a Web3.0 lottery game, featuring ticket purchases, random number generation, and prize distribution. It leverages Chainlink’s Verifiable Random Function (VRF) for secure and tamper-proof randomness, along with Chainlink Automation for efficient and reliable contract management.
 
 ## Table of Contents
 
-- [Smart Contract Lottery with Foundry](#smart-contract-lottery-with-foundry)
+- [Web3.0 Smart Contract Lottery](#web30-smart-contract-lottery)
   - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
   - [Prerequisites](#prerequisites)
@@ -22,6 +22,8 @@ This project explores the Foundry smart contract development environment and pro
 
 Before you begin, ensure you have met the following requirements:
 
+- You have installed [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+  - You'll know you did it right if you can run `git --version` and you see a response like `git version x.x.x`
 - You have installed [Foundry](https://github.com/gakonst/foundry)
 - You have a basic understanding of Solidity and smart contract development
 - You have a MetaMask wallet or any other Ethereum wallet
@@ -32,12 +34,12 @@ To install this project, follow these steps:
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/your-repo-name.git
+    git clone https://github.com/jaym9000/SmartContract-Lottery.git
     ```
 
 2. Navigate to the project directory:
     ```sh
-    cd your-repo-name
+    cd SmartContract-Lottery
     ```
 
 3. Install the dependencies:
@@ -51,33 +53,33 @@ To use this project, follow these steps:
 
 1. Compile the smart contracts:
     ```sh
-    forge build
+    make build
     ```
 
-2. Deploy the smart contracts to a local or test network:
-    ```sh
-    forge create --rpc-url <YOUR_RPC_URL> --private-key <YOUR_PRIVATE_KEY> src/Lottery.sol:Lottery
-    ```
-
-3. Interact with the deployed contract using Foundry scripts or a frontend interface.
+2. Interact with the deployed contract using Foundry scripts or a frontend interface (frontend is a future project).
 
 ## Testing
 
 To run tests for this project, use the following command:
 
 ```sh
-forge test
+make test
 ```
 
 ## Deployment
 
 To deploy this project, follow these steps:
 
-1. Ensure you have configured your environment variables for deployment (e.g., RPC URL, private key).
-2. Deploy the contract using Foundry:
-```
-forge create --rpc-url <YOUR_RPC_URL> --private-key <YOUR_PRIVATE_KEY> src/Lottery.sol:Lottery
-```
+1. Deploy the smart contracts to the anvil testnet. You need to have it running in another terminal in order for it to deploy.
+    ```sh
+    make deploy
+    ```
+
+2. Deploy the smart contracts to the Sepolia testnet.
+    ```sh
+    make deploy ARGS="--network sepolia"
+    ```
+    This script sets up a Chainlink VRF subscription for you. If you already have an existing subscription, you can update it in the scripts/HelperConfig.s.sol file. Additionally, it will automatically register your contract as a consumer.
 
 ## License
 
