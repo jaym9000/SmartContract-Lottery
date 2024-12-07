@@ -91,5 +91,5 @@ If you appreciated this, feel free to follow me or donate! *Below is JM's addres
 
 ETH/Arbitrum/Optimism/Polygon/etc Address: 0x0f879bFF6c5cb229AFBaFCfFFE6C0FC29f95c796
 
-[![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://x.com/JM_Mahoro)
+[![Twitter](https://img.shields.io/badge/Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://x.com/Boku_JM)
 [![Linkedin](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/jeanmarcc/)
